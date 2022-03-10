@@ -1,0 +1,122 @@
+//Canal de YouTube -> RobotUNO
+//BRAZO ROBOTICO 2.0
+
+#include <Servo.h>
+#include <Stepper.h>
+#define STEPS 32
+#define temp 25
+
+//MOTOR PASO A PASO
+volatile boolean TurnDetected; 
+volatile boolean rotationdirection; 
+const int PinCLK=2;   
+const int PinDT=3;   
+int RotaryPosition=0;   
+int PrevPosition;    
+int StepsToTake; 
+Stepper small_stepper(STEPS, 4, 6, 5, 7);
+void isr ()  {
+  delay(4);  // delay for Debouncing
+  if (digitalRead(PinCLK))
+    rotationdirection= digitalRead(PinDT);
+  else
+    rotationdirection= !digitalRead(PinDT);
+  TurnDetected = true;
+}
+
+//SERVOMOTORES
+int i=0,j=0,x=0;
+Servo servomotor3; //Servomotor pinza
+int boton_sub3=0;
+int boton_baj3=0;
+Servo servomotor2; //Servomotor en medio
+int boton_sub2=0;
+int boton_baj2=0;
+Servo servomotor1; //Servomotor abajo
+int boton_sub1=0;
+int boton_baj1=0;
+
+void setup(){
+  //MOTOR PASO A PASO
+  pinMode(PinCLK,INPUT);
+  pinMode(PinDT,INPUT);  
+  attachInterrupt (0,isr,FALLING); 
+
+  //SERVOMOTORES
+  servomotor3.attach(13);
+  servomotor3.write(0);
+  pinMode(A4,INPUT);
+  pinMode(A5,INPUT);
+  
+  servomotor2.attach(12);
+  servomotor2.write(0);
+  pinMode(A2,INPUT);
+  pinMode(A3,INPUT);
+  
+  servomotor1.attach(11);
+  servomotor1.write(0);
+  pinMode(A0,INPUT);
+  pinMode(A1,INPUT);
+}
+
+void loop(){
+  //MOTOR PASO A PASO
+  small_stepper.setSpeed(700); 
+  if (TurnDetected)  {
+    PrevPosition = RotaryPosition; 
+    if (rotationdirection) {
+      RotaryPosition=RotaryPosition-1;}
+    else {RotaryPosition=RotaryPosition+1;}
+    TurnDetected = false;
+    if ((PrevPosition + 1) == RotaryPosition) {
+      StepsToTake=50; 
+      small_stepper.step(StepsToTake);}
+    if ((RotaryPosition + 1) == PrevPosition) {
+      StepsToTake=-50;
+      small_stepper.step(StepsToTake);}
+  }
+     digitalWrite(4, LOW);
+     digitalWrite(5, LOW);
+     digitalWrite(6, LOW);
+     digitalWrite(7, LOW);   
+  
+  //SERVOMOTOR pinza
+  boton_sub3=digitalRead(A4);
+  boton_baj3=digitalRead(A5);
+  if(boton_sub3==HIGH){
+     i++;
+     servomotor3.write(i);
+     delay(temp);
+  }
+  if(boton_baj3==HIGH){
+    i--;
+    servomotor3.write(i);
+    delay(temp);
+  }
+  //SERVOMOTOR en medio 
+  boton_sub2=digitalRead(A2);
+  boton_baj2=digitalRead(A3);
+  if(boton_sub2==HIGH){
+     j++;
+     servomotor2.write(j);
+     delay(temp);
+  }
+  if(boton_baj2==HIGH){
+    j--;
+    servomotor2.write(j);
+    delay(temp);
+  }
+  //SERVOMOTOR abajo
+  boton_sub1=digitalRead(A0);
+  boton_baj1=digitalRead(A1);
+  if(boton_sub1==HIGH){
+     x++;
+     servomotor1.write(x);
+     delay(temp);
+  }
+  if(boton_baj1==HIGH){
+    x--;
+    servomotor1.write(x);
+    delay(temp);
+  }
+}
